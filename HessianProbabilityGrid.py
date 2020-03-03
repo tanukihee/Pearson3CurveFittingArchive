@@ -19,7 +19,7 @@ class Data:
         if len(arr) < 99:
             self.probLimLeft = 1
         else:
-            self.probLimLeft = 10**(2 - np.ceil(np.log10(data.n + 2)))
+            self.probLimLeft = 10**(2 - np.ceil(np.log10(self.n + 2)))
         self.probLimRight = 100 - self.probLimLeft
 
     def figure(self, grid=True, logVert=False, font=["Sarasa Gothic CL"]):
@@ -68,9 +68,9 @@ class Data:
             self.coeffOfSkew = stats.skew(self.arr, bias=False)
         # 偏态系数
         if output:
-            print("期望 EX 为 {:.4f}".format(self.expectation))
-            print("变差系数 Cv 为 {:.4f}".format(self.coeffOfVar))
-            print("偏态系数 Cs 为 {:.4f}".format(self.coeffOfSkew))
+            print("期望 EX 为 {:.2f}".format(self.expectation))
+            print("变差系数 Cv 为 {:.2f}".format(self.coeffOfVar))
+            print("偏态系数 Cs 为 {:.3f}".format(self.coeffOfSkew))
 
     def empiScatter(self, method="expectation"):
         """
@@ -78,13 +78,13 @@ class Data:
         
         ## 输入参数
         
-        + `method`：经验频率计算方法，可选列表见下
+        + `method`：经验频率计算方法，可选值见下列表
         
-            - `expectation`：数学期望公式，默认
+            - `"expectation"`：数学期望公式，默认
             
-            - `chegdayev`：切哥达耶夫公式
+            - `"chegdayev"`：切哥达耶夫公式
             
-            - `hessian`：海森公式
+            - `"hessian"`：海森公式
         """
         self.sorted = np.sort(self.arr)[::-1]
         # 逆序排序输入数组
@@ -108,40 +108,73 @@ class Data:
                     label="经验概率点")
         # 点绘经验概率
 
-    def theoPlot(self, **kwargs):
+    def momentPlot(self):
         """
-        # 绘制理论概率曲线
+        # 绘制矩法估计参数理论概率曲线
+        """
+        x = np.linspace(self.probLimLeft, self.probLimRight, 1000)
+        theoY = (pearson3.ppf(1 - x / 100, self.coeffOfSkew) * self.coeffOfVar
+                 + 1) * self.expectation
+
+        plt.plot(x, theoY, "b--", lw=1, label="矩法估计参数概率曲线")
+        # 绘制理论曲线
+
+    def plotFitting(self, method="OLS", output=True):
+        """
+        # 优化适线
         
         ## 输入参数
         
-        请以 `key` = `value` 格式输入
+        + `method`：优化适线方法，可选值见下列表
         
-        + `estCV`：变差系数估值
+            - `"OLS"`，离差平方和最小，默认
         
-        + `estCS`：偏态系数估值
-        
-        + `estEX`：期望估值
-        
-        如果没有输入，默认为矩法估计值
+            - `"ABS"`，离差绝对值最小（没做出来）
+            
+            - `"WLS"`，相对离差平方和最小（也没做出来）
         """
 
-        self.estCV = self.coeffOfVar
-        self.estCS = self.coeffOfSkew
-        self.estEX = self.expectation
-        # 默认值
+        if method == "OLS":
+            R = []
+            for fitCS in np.arange(0, 10 * self.coeffOfVar, 0.001):
+                empiPhi = pearson3.ppf(1 - self.empiProb / 100, fitCS)
+                fitEX = (np.sum(self.sorted) * np.sum(empiPhi**2) -
+                         np.sum(self.sorted * empiPhi) * np.sum(empiPhi)) / (
+                             self.n * np.sum(empiPhi**2) - np.sum(empiPhi)**2)
 
-        if "estCV" in kwargs:
-            self.estCV = kwargs["estCV"]
-        if "estCS" in kwargs:
-            self.estCS = kwargs["estCS"]
-        if "estEX" in kwargs:
-            self.estEX = kwargs["estEX"]
+                fitCV = (self.n * np.sum(self.sorted * empiPhi) -
+                         np.sum(self.sorted) * np.sum(empiPhi)) / (
+                             np.sum(self.sorted) * np.sum(empiPhi**2) -
+                             np.sum(self.sorted * empiPhi) * np.sum(empiPhi))
+
+                R.append(
+                    np.sum((self.sorted - self.expectation *
+                            (1 + fitCV * empiPhi))**2))
+
+                if len(R) > 2 and R[-1] > R[-2]:
+                    self.fitEX = fitEX
+                    self.fitCV = fitCV
+                    self.fitCS = fitCS
+                    break
+                # ！谁有好算法帮我重构
+
+        if output:
+            print("适线后")
+            print("期望 EX 为 {:.2f}".format(self.fitEX))
+            print("变差系数 Cv 为 {:.2f}".format(self.fitCV))
+            print("偏态系数 Cs 为 {:.3f}".format(self.fitCS))
+
+    def fittedPlot(self):
+        """
+        # 绘制适线后的概率曲线
+        
+        """
 
         x = np.linspace(self.probLimLeft, self.probLimRight, 1000)
-        theoY = (pearson3.ppf(1 - x / 100, self.estCS) * self.estCV +
-                 1) * self.estEX
+        theoY = (pearson3.ppf(1 - x / 100, self.fitCS) * self.fitCV +
+                 1) * self.fitEX
 
-        plt.plot(x, theoY, "r-", lw=2, label="理论概率曲线")
+        plt.plot(x, theoY, "r-", lw=2, label="适线后概率曲线")
         # 绘制理论曲线
 
     def prob2Value(self, prob):
@@ -157,8 +190,8 @@ class Data:
         + `value`：设计值
         """
 
-        value = (pearson3.ppf(1 - prob / 100, self.estCS) * self.estCV +
-                 1) * self.estEX
+        value = (pearson3.ppf(1 - prob / 100, self.fitCS) * self.fitCV +
+                 1) * self.fitEX
 
         print("{0}% 的设计频率对应的设计值为 {1:.2f}".format(prob, value))
 
@@ -177,7 +210,7 @@ class Data:
         + `prob`：设计频率，单位百分数
         """
         prob = pearson3.cdf(
-            (value / self.estEX - 1) / self.estCV, self.estCS) * 100
+            (value / self.fitEX - 1) / self.fitCV, self.fitCS) * 100
 
         print("{0} 的设计值对应的设计频率为 {1:.4f}%".format(value, prob))
 
@@ -216,10 +249,12 @@ data = Data(
 data.figure()
 data.statParams()
 data.empiScatter()
-data.theoPlot(estCS=0.9)
+data.momentPlot()
+data.plotFitting()
+data.fittedPlot()
 
-data.prob2Value(50)
-data.value2Prob(640.415)
+data.prob2Value(prob=10)
+data.value2Prob(value=935.18)
 
 plt.legend()
 plt.show()
