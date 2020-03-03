@@ -68,9 +68,9 @@ class Data:
             self.coeffOfSkew = stats.skew(self.arr, bias=False)
         # 偏态系数
         if output:
-            print("期望 EX 为 {:.2f}".format(self.expectation))
-            print("变差系数 Cv 为 {:.2f}".format(self.coeffOfVar))
-            print("偏态系数 Cs 为 {:.3f}".format(self.coeffOfSkew))
+            print("期望 EX 为 %.2f" % self.expectation)
+            print("变差系数 Cv 为 %.2f" % self.coeffOfVar)
+            print("偏态系数 Cs 为 %.3f" % self.coeffOfSkew)
 
     def empiScatter(self, method="expectation"):
         """
@@ -136,33 +136,50 @@ class Data:
 
         if method == "OLS":
             R = []
-            for fitCS in np.arange(0, 10 * self.coeffOfVar, 0.001):
-                empiPhi = pearson3.ppf(1 - self.empiProb / 100, fitCS)
-                fitEX = (np.sum(self.sorted) * np.sum(empiPhi**2) -
-                         np.sum(self.sorted * empiPhi) * np.sum(empiPhi)) / (
-                             self.n * np.sum(empiPhi**2) - np.sum(empiPhi)**2)
+            expectation = []
+            coeffOfVar = []
+            coeffOfSkew = []
 
-                fitCV = (self.n * np.sum(self.sorted * empiPhi) -
-                         np.sum(self.sorted) * np.sum(empiPhi)) / (
-                             np.sum(self.sorted) * np.sum(empiPhi**2) -
-                             np.sum(self.sorted * empiPhi) * np.sum(empiPhi))
+            for cs in np.arange(0, 10 * self.coeffOfVar, 0.001):
+                coeffOfSkew.append(cs)
+
+                empiPhi = pearson3.ppf(1 - self.empiProb / 100,
+                                       coeffOfSkew[-1])
+
+                expectation.append(
+                    (np.sum(self.sorted) * np.sum(empiPhi**2) -
+                     np.sum(self.sorted * empiPhi) * np.sum(empiPhi)) /
+                    (self.n * np.sum(empiPhi**2) - np.sum(empiPhi)**2))
+
+                coeffOfVar.append(
+                    (self.n * np.sum(self.sorted * empiPhi) -
+                     np.sum(self.sorted) * np.sum(empiPhi)) /
+                    (np.sum(self.sorted) * np.sum(empiPhi**2) -
+                     np.sum(self.sorted * empiPhi) * np.sum(empiPhi)))
 
                 R.append(
                     np.sum((self.sorted - self.expectation *
-                            (1 + fitCV * empiPhi))**2))
+                            (1 + coeffOfVar[-1] * empiPhi))**2))
 
-                if len(R) > 2 and R[-1] > R[-2]:
-                    self.fitEX = fitEX
-                    self.fitCV = fitCV
-                    self.fitCS = fitCS
+                if len(R) > 2:
+                    R.pop(0)
+                    expectation.pop(0)
+                    coeffOfVar.pop(0)
+                    coeffOfSkew.pop(0)
+
+                if R[-1] > R[0]:
+                    self.fitEX = expectation[0]
+                    self.fitCV = coeffOfVar[0]
+                    self.fitCS = coeffOfSkew[0]
+                    self.R = R[0]
                     break
                 # ！谁有好算法帮我重构
 
         if output:
             print("适线后")
-            print("期望 EX 为 {:.2f}".format(self.fitEX))
-            print("变差系数 Cv 为 {:.2f}".format(self.fitCV))
-            print("偏态系数 Cs 为 {:.3f}".format(self.fitCS))
+            print("期望 EX 为 %.2f" % self.fitEX)
+            print("变差系数 Cv 为 %.2f" % self.fitCV)
+            print("偏态系数 Cs 为 %.3f" % self.fitCS)
 
     def fittedPlot(self):
         """
@@ -193,7 +210,7 @@ class Data:
         value = (pearson3.ppf(1 - prob / 100, self.fitCS) * self.fitCV +
                  1) * self.fitEX
 
-        print("{0}% 的设计频率对应的设计值为 {1:.2f}".format(prob, value))
+        print("%.4f%% 的设计频率对应的设计值为 %.2f" % (prob, value))
 
         return value
 
@@ -209,52 +226,37 @@ class Data:
         
         + `prob`：设计频率，单位百分数
         """
-        prob = pearson3.cdf(
+        prob = 100 - pearson3.cdf(
             (value / self.fitEX - 1) / self.fitCV, self.fitCS) * 100
 
-        print("{0} 的设计值对应的设计频率为 {1:.4f}%".format(value, prob))
+        print("%.2f 的设计值对应的设计频率为 %.4f%%" % (value, prob))
 
         return prob
 
 
 data = Data(
     np.array([
-        538.3,
-        624.9,
-        663.2,
-        591.7,
-        557.2,
-        998,
-        641.5,
-        341.1,
-        964.2,
-        687.3,
-        546.7,
-        509.9,
-        769.2,
-        615.5,
-        417.1,
-        789.3,
-        732.9,
-        1064.5,
-        606.7,
-        586.7,
-        567.4,
-        587.7,
-        709,
-        883.5,
+        538.3, 624.9, 663.2, 591.7, 557.2, 998, 641.5, 341.1, 964.2, 687.3,
+        546.7, 509.9, 769.2, 615.5, 417.1, 789.3, 732.9, 1064.5, 606.7, 586.7,
+        567.4, 587.7, 709, 883.5
     ]))
 # 6.3 题的数据
 
-data.figure()
-data.statParams()
-data.empiScatter()
-data.momentPlot()
-data.plotFitting()
-data.fittedPlot()
 
-data.prob2Value(prob=10)
-data.value2Prob(value=935.18)
+def main():
+    data.figure()
+    data.statParams()
+    data.empiScatter()
+    data.momentPlot()
+    data.plotFitting()
+    data.fittedPlot()
 
-plt.legend()
-plt.show()
+    data.prob2Value(prob=10)
+    data.value2Prob(value=935.16)
+
+    plt.legend()
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
