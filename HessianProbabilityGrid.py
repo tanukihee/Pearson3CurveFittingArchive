@@ -16,11 +16,6 @@ class Data:
     def __init__(self, arr):
         self.arr = arr
         self.n = len(arr)
-        if len(arr) < 99:
-            self.probLimLeft = 1
-        else:
-            self.probLimLeft = 10**(2 - np.ceil(np.log10(self.n + 2)))
-        self.probLimRight = 100 - self.probLimLeft
 
     def figure(self, grid=True, logVert=False, font=["Sarasa Gothic CL"]):
         """
@@ -34,14 +29,22 @@ class Data:
         
         + `font`：标签字体，默认为更纱黑体 CL
         """
-        fig, ax = plt.subplots()
-        plt.rcParams["font.sans-serif"] = font
-        ax.set_xscale("prob")
+        self.fig, self.ax = plt.subplots(figsize=(7, 5))
+        # 创建「画板」与「画布」
+        
+        self.ax.set_xscale("prob")
         # 横坐标改为概率坐标
-        ax.set_xlim(self.probLimLeft, self.probLimRight)
-
-        plt.grid(grid)
+        
+        self.ax.set_xlabel(r"频率 $P$（%）")
+        self.ax.set_ylabel(r"流量 $Q$（m$^3$/s）")
+        
+        self.ax.grid(grid)
         # 背景网格
+
+        if logVert:
+            self.ax.set_yscale("log")
+
+        plt.rcParams["font.sans-serif"] = font
 
     def statParams(self, varSkew=False, output=True):
         """
@@ -101,11 +104,21 @@ class Data:
             # 海森公式
         # 计算经验概率
 
-        plt.scatter(self.empiProb,
-                    self.sorted,
-                    marker="x",
-                    c="k",
-                    label="经验概率点")
+        if self.empiProb[0] > 1:
+            self.probLimLeft = 1
+        else:
+            self.probLimLeft = 10**(np.ceil(np.log10(self.empiProb[0])) - 1)
+        self.probLimRight = 100 - self.probLimLeft
+
+        self.ax.set_xlim(self.probLimLeft, self.probLimRight)
+        # 画布坐标轴设置
+
+        self.ax.scatter(self.empiProb,
+                        self.sorted,
+                        marker="o",
+                        c="none",
+                        edgecolors="k",
+                        label="经验概率点")
         # 点绘经验概率
 
     def momentPlot(self):
@@ -116,7 +129,7 @@ class Data:
         theoY = (pearson3.ppf(1 - x / 100, self.coeffOfSkew) * self.coeffOfVar
                  + 1) * self.expectation
 
-        plt.plot(x, theoY, "b--", lw=1, label="矩法估计参数概率曲线")
+        self.ax.plot(x, theoY, "b--", lw=1, label="矩法估计参数概率曲线")
         # 绘制理论曲线
 
     def plotFitting(self, method="OLS", output=True):
@@ -130,8 +143,10 @@ class Data:
             - `"OLS"`，离差平方和最小，默认
         
             - `"ABS"`，离差绝对值最小（没做出来）
-            
+
             - `"WLS"`，相对离差平方和最小（也没做出来）
+
+        + `output`：是否在控制台输出参数，默认为 True
         """
 
         if method == "OLS":
@@ -191,7 +206,7 @@ class Data:
         theoY = (pearson3.ppf(1 - x / 100, self.fitCS) * self.fitCV +
                  1) * self.fitEX
 
-        plt.plot(x, theoY, "r-", lw=2, label="适线后概率曲线")
+        self.ax.plot(x, theoY, "r-", lw=2, label="适线后概率曲线")
         # 绘制理论曲线
 
     def prob2Value(self, prob):
@@ -254,7 +269,7 @@ def main():
     data.prob2Value(prob=10)
     data.value2Prob(value=935.16)
 
-    plt.legend()
+    data.ax.legend()
     plt.show()
 
 

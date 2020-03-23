@@ -10,13 +10,13 @@
 
 控制台里
 
-``` 
+``` powershell
 conda install mpl-probscale --channel=conda-forge
 ```
 
 或
 
-``` 
+``` powershell
 pip install probscale
 ```
 
@@ -53,6 +53,10 @@ pip install probscale
     用队列重写了一下适线，原来的应该有问题。
 
     精度高了还是很吃内存（小数点后三位应该够了吧）。
+
+* 3.2
+
+    参照[这篇文章](https://zhuanlan.zhihu.com/p/93423829)，绘图相关的代码变得更准确、更优雅？了（笑）。
 
 ## TODO
 
