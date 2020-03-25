@@ -6,7 +6,7 @@
 
 ## 使用之前
 
-环境配置。 `numpy` 、 `plt` 和 `scipy` 较为常见不说，从 `probscale` 的[官网](https://matplotlib.org/mpl-probscale/)抄录一段的安装说明吧。
+环境配置。 [ `numpy` ](https://numpy.org/) 、 [ `matplotlib` ](https://matplotlib.org/) 和 [ `scipy` ](https://scipy.org/) 较为常见不说，仅介绍 [ `probscale` ](https://matplotlib.org/mpl-probscale/)的安装方法。
 
 控制台里
 
@@ -26,7 +26,7 @@ pip install probscale
 
 * 1.0
 
-    原 MATLAB 代码的 copy，py 上有 `pearson3` 的轮子，至少不用像 MATLAB 里用 gamma 分布 `gaminv` 倒推 P-III 分布了。
+    原 MATLAB 代码的 copy，py 上有 `scipy.stats.pearson3()` 的轮子，至少不用像 MATLAB 里用 gamma 分布 `gaminv()` 倒推 P-III 分布了。
 
     但是概率格纸仍要手动绘制，即对横坐标值进行变换，还要去掉原 x 轴的标注。
 
@@ -56,11 +56,17 @@ pip install probscale
 
 * 3.2
 
-    参照[这篇文章](https://zhuanlan.zhihu.com/p/93423829)，绘图相关的代码变得更准确、更优雅？了（笑）。
+    参照[这篇文章](https://zhuanlan.zhihu.com/p/93423829)与 `matplotlib` 的手册，绘图相关的代码变得更准确、更优雅？了（笑）。
+
+* 4.0
+
+    没错，我们至今为止所做的一切**全部木大**。只要我们不断造轮子，前方就会有别人造好的轮子。所以，不要停下来啊！
+
+    适线部分重写，直接用 `scipy.optimize.curve_fit()` 成熟的轮子（速度和精度不知道高到哪里去了）。发现以前是我不会用而不是不好用，哭了。在此诚挚地向 `scipy` 道歉😢。
+
+    ~~啥？你说原来 TODO 里的其他优化适线法（离差绝对值 ABS 和相对离差平方和 WLS）？别人都有轮子了还问我干嘛？~~
 
 ## TODO
-
-* 优化适线（离差绝对值 ABS、相对离差平方和 WLS）
 
 * 可视化界面与封装
 

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import probscale
 import scipy.stats as stats
+from scipy.optimize import curve_fit
 from scipy.stats import pearson3
 
 
@@ -31,13 +32,13 @@ class Data:
         """
         self.fig, self.ax = plt.subplots(figsize=(7, 5))
         # 创建「画板」与「画布」
-        
+
         self.ax.set_xscale("prob")
         # 横坐标改为概率坐标
-        
+
         self.ax.set_xlabel(r"频率 $P$（%）")
         self.ax.set_ylabel(r"流量 $Q$（m$^3$/s）")
-        
+
         self.ax.grid(grid)
         # 背景网格
 
@@ -132,63 +133,31 @@ class Data:
         self.ax.plot(x, theoY, "b--", lw=1, label="矩法估计参数概率曲线")
         # 绘制理论曲线
 
-    def plotFitting(self, method="OLS", output=True):
+    def plotFitting(self, output=True):
         """
         # 优化适线
         
         ## 输入参数
-        
-        + `method`：优化适线方法，可选值见下列表
-        
-            - `"OLS"`，离差平方和最小，默认
-        
-            - `"ABS"`，离差绝对值最小（没做出来）
-
-            - `"WLS"`，相对离差平方和最小（也没做出来）
 
         + `output`：是否在控制台输出参数，默认为 True
         """
 
-        if method == "OLS":
-            R = []
-            expectation = []
-            coeffOfVar = []
-            coeffOfSkew = []
+        p3 = lambda prob, ex, cv, cs: (pearson3.ppf(1 - prob / 100, cs) * cv +
+                                       1) * ex
 
-            for cs in np.arange(0, 10 * self.coeffOfVar, 0.001):
-                coeffOfSkew.append(cs)
+        [self.fitEX, self.fitCV, self.fitCS], pcov = curve_fit(
+            p3, self.empiProb, self.sorted,
+            [self.expectation, self.coeffOfVar, self.coeffOfSkew])
 
-                empiPhi = pearson3.ppf(1 - self.empiProb / 100,
-                                       coeffOfSkew[-1])
-
-                expectation.append(
-                    (np.sum(self.sorted) * np.sum(empiPhi**2) -
-                     np.sum(self.sorted * empiPhi) * np.sum(empiPhi)) /
-                    (self.n * np.sum(empiPhi**2) - np.sum(empiPhi)**2))
-
-                coeffOfVar.append(
-                    (self.n * np.sum(self.sorted * empiPhi) -
-                     np.sum(self.sorted) * np.sum(empiPhi)) /
-                    (np.sum(self.sorted) * np.sum(empiPhi**2) -
-                     np.sum(self.sorted * empiPhi) * np.sum(empiPhi)))
-
-                R.append(
-                    np.sum((self.sorted - self.expectation *
-                            (1 + coeffOfVar[-1] * empiPhi))**2))
-
-                if len(R) > 2:
-                    R.pop(0)
-                    expectation.pop(0)
-                    coeffOfVar.pop(0)
-                    coeffOfSkew.pop(0)
-
-                if R[-1] > R[0]:
-                    self.fitEX = expectation[0]
-                    self.fitCV = coeffOfVar[0]
-                    self.fitCS = coeffOfSkew[0]
-                    self.R = R[0]
-                    break
-                # ！谁有好算法帮我重构
+        self.RMoment = np.sum(
+            (self.sorted - self.expectation *
+             (1 + self.coeffOfVar *
+              pearson3.ppf(1 - self.empiProb / 100, self.coeffOfSkew)))**2)
+        self.R = np.sum(
+            (self.sorted - self.fitEX *
+             (1 + self.fitCV *
+              pearson3.ppf(1 - self.empiProb / 100, self.fitCS)))**2)
+        # 离差平方和，用于检验适线效果
 
         if output:
             print("适线后")
@@ -267,7 +236,7 @@ def main():
     data.fittedPlot()
 
     data.prob2Value(prob=10)
-    data.value2Prob(value=935.16)
+    data.value2Prob(value=936.37)
 
     data.ax.legend()
     plt.show()
