@@ -73,8 +73,8 @@ class Data:
         # 偏态系数
         if output:
             print("期望 EX 为 %.2f" % self.expectation)
-            print("变差系数 Cv 为 %.2f" % self.coeffOfVar)
-            print("偏态系数 Cs 为 %.3f" % self.coeffOfSkew)
+            print("变差系数 Cv 为 %.4f" % self.coeffOfVar)
+            print("偏态系数 Cs 为 %.4f" % self.coeffOfSkew)
 
     def empiScatter(self, method="expectation"):
         """
@@ -130,24 +130,42 @@ class Data:
         theoY = (pearson3.ppf(1 - x / 100, self.coeffOfSkew) * self.coeffOfVar
                  + 1) * self.expectation
 
-        self.ax.plot(x, theoY, "b--", lw=1, label="矩法估计参数概率曲线")
+        self.ax.plot(x, theoY, "--", lw=1, label="矩法估计参数概率曲线")
         # 绘制理论曲线
 
-    def plotFitting(self, output=True):
+    def plotFitting(self, svRatio=0, output=True):
         """
         # 优化适线
         
         ## 输入参数
 
+        + `svRatio`：倍比系数，即偏态系数 `Cs` 与 变差系数 `Cv` 之比。
+        
+            默认为 0，即关闭倍比系数功能。
+        
+            - 当 `svRatio` ≠ 0 时，Cs 不参与适线运算中，且 `Cs` = `svRatio` × `Cv`；
+
+            - 当 `svRatio` = 0 时，Cs 正常参与适线运算。
+
         + `output`：是否在控制台输出参数，默认为 True
         """
 
-        p3 = lambda prob, ex, cv, cs: (pearson3.ppf(1 - prob / 100, cs) * cv +
-                                       1) * ex
+        if svRatio == 0:
+            p3 = lambda prob, ex, cv, cs: (pearson3.ppf(1 - prob / 100, cs) *
+                                           cv + 1) * ex
 
-        [self.fitEX, self.fitCV, self.fitCS], pcov = curve_fit(
-            p3, self.empiProb, self.sorted,
-            [self.expectation, self.coeffOfVar, self.coeffOfSkew])
+            [self.fitEX, self.fitCV, self.fitCS], pcov = curve_fit(
+                p3, self.empiProb, self.sorted,
+                [self.expectation, self.coeffOfVar, self.coeffOfSkew])
+        else:
+            p3 = lambda prob, ex, cv: (pearson3.ppf(1 - prob / 100, cv *
+                                                    svRatio) * cv + 1) * ex
+
+            [self.fitEX,
+             self.fitCV], pcov = curve_fit(p3, self.empiProb, self.sorted,
+                                           [self.expectation, self.coeffOfVar])
+
+            self.fitCS = self.fitCV * svRatio
 
         self.RMoment = np.sum(
             (self.sorted - self.expectation *
@@ -162,8 +180,8 @@ class Data:
         if output:
             print("适线后")
             print("期望 EX 为 %.2f" % self.fitEX)
-            print("变差系数 Cv 为 %.2f" % self.fitCV)
-            print("偏态系数 Cs 为 %.3f" % self.fitCS)
+            print("变差系数 Cv 为 %.4f" % self.fitCV)
+            print("偏态系数 Cs 为 %.4f" % self.fitCS)
 
     def fittedPlot(self):
         """
@@ -175,7 +193,7 @@ class Data:
         theoY = (pearson3.ppf(1 - x / 100, self.fitCS) * self.fitCV +
                  1) * self.fitEX
 
-        self.ax.plot(x, theoY, "r-", lw=2, label="适线后概率曲线")
+        self.ax.plot(x, theoY, lw=2, label="适线后概率曲线")
         # 绘制理论曲线
 
     def prob2Value(self, prob):
