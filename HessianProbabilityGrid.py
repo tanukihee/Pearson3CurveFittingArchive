@@ -1,9 +1,26 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import probscale
 import scipy.stats as stats
 from scipy.optimize import curve_fit
 from scipy.stats import pearson3
+
+matplotlib.use("pgf")
+plt.rcParams.update({
+    "pgf.rcfonts":
+    False,
+    "pgf.preamble": [
+        "\\usepackage{xeCJK}",
+        "\\usepackage{amsmath}",
+        "\\usepackage{siunitx}",
+        "\\sisetup{detect-all}"
+        "\\usepackage{unicode-math}",
+        "\\setsansfont{FiraGO}"
+        "\\setmathfont{Fira Math}"
+        "\\setCJKsansfont{Source Han Sans CN}",
+    ],
+})
 
 
 class Data:
@@ -18,7 +35,7 @@ class Data:
         self.arr = arr
         self.n = len(arr)
 
-    def figure(self, grid=True, logVert=False, font=["Sarasa Gothic CL"]):
+    def figure(self, grid=True, logVert=False):
         """
         # 绘制图形
         
@@ -37,15 +54,13 @@ class Data:
         # 横坐标改为概率坐标
 
         self.ax.set_xlabel(r"频率 $P$（%）")
-        self.ax.set_ylabel(r"流量 $Q$（m$^3$/s）")
+        self.ax.set_ylabel(r"流量 $Q$（\si{\cubic m/s}）")
 
         self.ax.grid(grid)
         # 背景网格
 
         if logVert:
             self.ax.set_yscale("log")
-
-        plt.rcParams["font.sans-serif"] = font
 
     def statParams(self, varSkew=False, output=True):
         """
@@ -257,7 +272,7 @@ def main():
     data.value2Prob(value=936.37)
 
     data.ax.legend()
-    plt.show()
+    plt.savefig("fig.pdf")
 
 
 if __name__ == "__main__":

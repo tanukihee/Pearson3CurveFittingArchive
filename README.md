@@ -22,6 +22,8 @@ pip install probscale
 
 即可。
 
+4.2 版本后另需要 LaTeX 引擎，推荐使用 Tex Live。
+
 ## 更新日志
 
 * 1.0
@@ -69,6 +71,10 @@ pip install probscale
 * 4.1
 
     添加设定倍比系数功能。
+
+* 4.2
+
+    为更加美观地显示中文，将 TeX 引擎更换为 pgf 的 XeLaTeX。生成的 pdf 文件可以使用终端的 `dvisvgm` 命令转化为 svg 文件。
 
 ## TODO
 
