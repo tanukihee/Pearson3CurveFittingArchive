@@ -91,7 +91,7 @@ class Data:
             print("变差系数 Cv 为 %.4f" % self.coeffOfVar)
             print("偏态系数 Cs 为 %.4f" % self.coeffOfSkew)
 
-    def empiScatter(self, method="expectation"):
+    def empiScatter(self):
         """
         # 点绘经验概率点
         
@@ -108,17 +108,8 @@ class Data:
         self.sorted = np.sort(self.arr)[::-1]
         # 逆序排序输入数组
 
-        if method == "expectation":
-            self.empiProb = np.arange(1, self.n + 1) / (self.n + 1) * 100
-            # 数学期望公式
-        elif method == "chegdayev":
-            self.empiProb = (np.arange(1, self.n + 1) - 0.3) / (self.n +
-                                                                0.4) * 100
-            # 切哥达耶夫公式
-        elif method == "hessian":
-            self.empiProb = (np.arange(1, self.n + 1) - 0.5) / self.n * 100
-            # 海森公式
-        # 计算经验概率
+        self.empiProb = (np.arange(self.n) + 1) / (self.n + 1) * 100
+        # 数学期望公式计算经验概率
 
         if self.empiProb[0] > 1:
             self.probLimLeft = 1
@@ -148,7 +139,7 @@ class Data:
         self.ax.plot(x, theoY, "--", lw=1, label="矩法估计参数概率曲线")
         # 绘制理论曲线
 
-    def plotFitting(self, svRatio=0, output=True):
+    def plotFitting(self, svRatio=0, EXFitting=True, output=True):
         """
         # 优化适线
         
@@ -162,35 +153,49 @@ class Data:
 
             - 当 `svRatio` = 0 时，Cs 正常参与适线运算。
 
+        + `EXFitting`：适线时是否调整 EX，默认为 True
+
         + `output`：是否在控制台输出参数，默认为 True
         """
 
         if svRatio == 0:
-            p3 = lambda prob, ex, cv, cs: (pearson3.ppf(1 - prob / 100, cs) *
-                                           cv + 1) * ex
+            if EXFitting:
+                p3 = lambda prob, ex, cv, cs: (pearson3.ppf(
+                    1 - prob / 100, cs) * cv + 1) * ex
 
-            [self.fitEX, self.fitCV, self.fitCS], pcov = curve_fit(
-                p3, self.empiProb, self.sorted,
-                [self.expectation, self.coeffOfVar, self.coeffOfSkew])
+                [self.fitEX, self.fitCV, self.fitCS], pcov = curve_fit(
+                    p3, self.empiProb, self.sorted,
+                    [self.expectation, self.coeffOfVar, self.coeffOfSkew])
+
+            else:
+                p3 = lambda prob, cv, cs: (pearson3.ppf(1 - prob / 100, cs) *
+                                           cv + 1) * self.expectation
+
+                [self.fitCV, self.fitCS
+                 ], pcov = curve_fit(p3, self.empiProb, self.sorted,
+                                     [self.coeffOfVar, self.coeffOfSkew])
+
+                self.fitEX = self.expectation
+
         else:
-            p3 = lambda prob, ex, cv: (pearson3.ppf(1 - prob / 100, cv *
-                                                    svRatio) * cv + 1) * ex
+            if EXFitting:
+                p3 = lambda prob, ex, cv: (pearson3.ppf(
+                    1 - prob / 100, cv * svRatio) * cv + 1) * ex
 
-            [self.fitEX,
-             self.fitCV], pcov = curve_fit(p3, self.empiProb, self.sorted,
-                                           [self.expectation, self.coeffOfVar])
+                [self.fitEX, self.fitCV
+                 ], pcov = curve_fit(p3, self.empiProb, self.sorted,
+                                     [self.expectation, self.coeffOfVar])
+
+            else:
+                p3 = lambda prob, cv: (pearson3.ppf(
+                    1 - prob / 100, cv * svRatio) * cv + 1) * self.expectation
+
+                [self.fitCV], pcov = curve_fit(p3, self.empiProb, self.sorted,
+                                               [self.coeffOfVar])
+
+                self.fitEX = self.expectation
 
             self.fitCS = self.fitCV * svRatio
-
-        self.RMoment = np.sum(
-            (self.sorted - self.expectation *
-             (1 + self.coeffOfVar *
-              pearson3.ppf(1 - self.empiProb / 100, self.coeffOfSkew)))**2)
-        self.R = np.sum(
-            (self.sorted - self.fitEX *
-             (1 + self.fitCV *
-              pearson3.ppf(1 - self.empiProb / 100, self.fitCS)))**2)
-        # 离差平方和，用于检验适线效果
 
         if output:
             print("适线后")
@@ -272,6 +277,8 @@ def main():
     data.value2Prob(value=936.37)
 
     data.ax.legend()
+
+    plt.tight_layout(0.5)
     plt.savefig("fig.pdf")
 
 

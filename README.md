@@ -76,6 +76,10 @@ pip install probscale
 
     为更加美观地显示中文，将 TeX 引擎更换为 pgf 的 XeLaTeX。生成的 pdf 文件可以使用终端的 `dvisvgm` 命令转化为 svg 文件。
 
+* 4.3
+
+    添加设定是否对期望 *EX* 进行调整的功能。去掉数学期望公式外的其他经验频率计算方法。
+
 ## TODO
 
 * 可视化界面与封装
