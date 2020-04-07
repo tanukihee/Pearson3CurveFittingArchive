@@ -29,11 +29,47 @@ class Data:
 
     ## 构造函数参数
     
-    + `arr`：水文数据
+    + `arr`：实测水文数据
     """
     def __init__(self, arr):
-        self.arr = arr
+        self.arr = np.sort(arr)[::-1]
+        # 降序排序输入数组
         self.n = len(arr)
+        # 实测期长度
+        self.extremeNum = 0
+        # 特大洪水数
+
+    def history(self, arr, length, num=0):
+        """
+        # 历史洪水数据
+        
+        ## 输入参数
+        
+        + `arr` 历史特大洪水序列，均为特大洪水
+
+        + `length` 调查期长度
+        
+        + `num` 特大洪水数，包括历史特大洪水与实测特大洪水，默认为历史特大洪水数
+        """
+        self.historia = np.sort(arr)[::-1]
+        # 历史洪水序列
+        self.length = length
+        # 调查期长度
+        self.extremeNum = np.max(len(self.historia), num)
+        # 特大洪水数
+        self.extremeNumInMeasure = self.extremeNum - len(arr)
+        # 实测期特大洪水数
+
+        # 特大洪水序列与一般洪水序列
+        self.extreme = self.historia
+        self.ordinary = self.arr
+        if self.extremeNumInMeasure > 0:
+            for i in range(self.extremeNumInMeasure):
+                self.extreme = np.append(self.extreme, self.arr[i])
+            self.ordinary = np.delete(self.arr,
+                                      range(self.extremeNumInMeasure))
+
+        self.arr = np.sort(np.append(self.extreme, self.ordinary))[::-1]
 
     def figure(self, grid=True, logVert=False):
         """
@@ -54,7 +90,7 @@ class Data:
         # 横坐标改为概率坐标
 
         self.ax.set_xlabel(r"频率 $P$（%）")
-        self.ax.set_ylabel(r"流量 $Q$（\si{\cubic m/s}）")
+        self.ax.set_ylabel(r"流量 $Q$（\si{m\cubed /s}）")
 
         self.ax.grid(grid)
         # 背景网格
@@ -62,71 +98,86 @@ class Data:
         if logVert:
             self.ax.set_yscale("log")
 
-    def statParams(self, varSkew=False, output=True):
-        """
-        # 输出数据的统计参数
-        
-        ## 输入参数
-        
-        + `varSkew`：偏态系数计算算法选择，具体可参考 wiki「Skewness」词条
-        
-        + `output`：是否在控制台输出参数，默认为 True
-        """
-        self.expectation = np.mean(self.arr)
-        # 期望
-        self.modulusRatio = self.arr / self.expectation
-        # 模比系数
-        self.coeffOfVar = np.sqrt(
-            np.sum((self.modulusRatio - 1)**2) / (self.n - 1))
-        # 变差系数
-
-        if not varSkew:
-            self.coeffOfSkew = np.sum((self.modulusRatio - 1)**3) / (
-                (self.n - 3) * self.coeffOfVar**3)
-        else:
-            self.coeffOfSkew = stats.skew(self.arr, bias=False)
-        # 偏态系数
-        if output:
-            print("期望 EX 为 %.2f" % self.expectation)
-            print("变差系数 Cv 为 %.4f" % self.coeffOfVar)
-            print("偏态系数 Cs 为 %.4f" % self.coeffOfSkew)
-
     def empiScatter(self):
         """
         # 点绘经验概率点
-        
-        ## 输入参数
-        
-        + `method`：经验频率计算方法，可选值见下列表
-        
-            - `"expectation"`：数学期望公式，默认
-            
-            - `"chegdayev"`：切哥达耶夫公式
-            
-            - `"hessian"`：海森公式
         """
-        self.sorted = np.sort(self.arr)[::-1]
-        # 逆序排序输入数组
-
-        self.empiProb = (np.arange(self.n) + 1) / (self.n + 1) * 100
         # 数学期望公式计算经验概率
+        if self.extremeNum == 0:
+            self.empiProb = (np.arange(self.n) + 1) / (self.n + 1) * 100
+        else:
+            self.extremeProb = (np.arange(self.extremeNum) +
+                                1) / (self.length + 1) * 100
+            self.ordinaryProb = self.extremeProb[-1] + (
+                100 - self.extremeProb[-1]) * (
+                    np.arange(self.n - self.extremeNumInMeasure) +
+                    1) / (self.n - self.extremeNumInMeasure + 1)
+            self.empiProb = np.append(self.extremeProb, self.ordinaryProb)
 
+        # 画布坐标轴设置
         if self.empiProb[0] > 1:
             self.probLimLeft = 1
         else:
             self.probLimLeft = 10**(np.ceil(np.log10(self.empiProb[0])) - 1)
         self.probLimRight = 100 - self.probLimLeft
-
         self.ax.set_xlim(self.probLimLeft, self.probLimRight)
-        # 画布坐标轴设置
 
-        self.ax.scatter(self.empiProb,
-                        self.sorted,
-                        marker="o",
-                        c="none",
-                        edgecolors="k",
-                        label="经验概率点")
         # 点绘经验概率
+        if self.extremeNum == 0:
+            self.ax.scatter(self.empiProb,
+                            self.arr,
+                            marker="o",
+                            c="none",
+                            edgecolors="k",
+                            label="经验概率点")
+        else:
+            self.ax.scatter(self.ordinaryProb,
+                            self.ordinary,
+                            marker="o",
+                            c="none",
+                            edgecolors="k",
+                            label="一般洪水经验概率点")
+            self.ax.scatter(self.extremeProb,
+                            self.extreme,
+                            marker="x",
+                            c="k",
+                            label="特大洪水经验概率点")
+
+    def statParams(self, output=True):
+        """
+        # 输出数据的统计参数
+        
+        ## 输入参数
+        
+        + `output`：是否在控制台输出参数，默认为 True
+        """
+        if self.extremeNum == 0:
+            self.expectation = np.mean(self.arr)
+            # 期望
+            self.modulusRatio = self.arr / self.expectation
+            # 模比系数
+            self.coeffOfVar = np.sqrt(
+                np.sum((self.modulusRatio - 1)**2) / (self.n - 1))
+            # 变差系数
+
+        else:
+            self.expectation = (np.sum(self.extreme) +
+                                (self.length - self.extremeNum) /
+                                (self.n - self.extremeNumInMeasure) *
+                                np.sum(self.ordinary)) / self.length
+            self.coeffOfVar = (np.sqrt(
+                (np.sum((self.extreme - self.expectation)**2) +
+                 (self.length - self.extremeNum) /
+                 (self.n - self.extremeNumInMeasure) * np.sum(
+                     (self.ordinary - self.expectation)**2)) /
+                (self.length - 1))) / self.expectation
+
+        self.coeffOfSkew = stats.skew(self.arr, bias=False)
+        # 偏态系数
+        if output:
+            print("期望 EX 为 %.2f" % self.expectation)
+            print("变差系数 Cv 为 %.4f" % self.coeffOfVar)
+            print("偏态系数 Cs 为 %.4f" % self.coeffOfSkew)
 
     def momentPlot(self):
         """
@@ -164,7 +215,7 @@ class Data:
                     1 - prob / 100, cs) * cv + 1) * ex
 
                 [self.fitEX, self.fitCV, self.fitCS], pcov = curve_fit(
-                    p3, self.empiProb, self.sorted,
+                    p3, self.empiProb, self.arr,
                     [self.expectation, self.coeffOfVar, self.coeffOfSkew])
 
             else:
@@ -172,7 +223,7 @@ class Data:
                                            cv + 1) * self.expectation
 
                 [self.fitCV, self.fitCS
-                 ], pcov = curve_fit(p3, self.empiProb, self.sorted,
+                 ], pcov = curve_fit(p3, self.empiProb, self.arr,
                                      [self.coeffOfVar, self.coeffOfSkew])
 
                 self.fitEX = self.expectation
@@ -183,14 +234,14 @@ class Data:
                     1 - prob / 100, cv * svRatio) * cv + 1) * ex
 
                 [self.fitEX, self.fitCV
-                 ], pcov = curve_fit(p3, self.empiProb, self.sorted,
+                 ], pcov = curve_fit(p3, self.empiProb, self.arr,
                                      [self.expectation, self.coeffOfVar])
 
             else:
                 p3 = lambda prob, cv: (pearson3.ppf(
                     1 - prob / 100, cv * svRatio) * cv + 1) * self.expectation
 
-                [self.fitCV], pcov = curve_fit(p3, self.empiProb, self.sorted,
+                [self.fitCV], pcov = curve_fit(p3, self.empiProb, self.arr,
                                                [self.coeffOfVar])
 
                 self.fitEX = self.expectation
@@ -256,31 +307,53 @@ class Data:
         return prob
 
 
-data = Data(
-    np.array([
-        538.3, 624.9, 663.2, 591.7, 557.2, 998, 641.5, 341.1, 964.2, 687.3,
-        546.7, 509.9, 769.2, 615.5, 417.1, 789.3, 732.9, 1064.5, 606.7, 586.7,
-        567.4, 587.7, 709, 883.5
-    ]))
-# 6.3 题的数据
+def successive():
+    data = Data(
+        np.array([
+            680.6, 468.4, 489.2, 450.6, 436.8, 586.2, 567.9, 473.9, 357.8,
+            650.9, 391, 201.2, 452.4, 750.9, 585.2, 304.5, 370.5, 351, 294.8,
+            360.9, 276, 549.1, 534, 349, 350, 372, 292, 485, 427, 620.8, 539,
+            474, 292, 228, 357, 425, 365, 241, 267, 305, 306, 238.9, 277.3,
+            170.8, 217.9, 208.5, 187.9
+        ]))
+    # 本例取自《工程水文学》（2010 年第 4 版，詹道江 徐向阳 陈元芳 主编）P150～151 表 6-3
 
-
-def main():
     data.figure()
-    data.statParams()
     data.empiScatter()
+    data.statParams()
     data.momentPlot()
     data.plotFitting()
     data.fittedPlot()
 
-    data.prob2Value(prob=10)
-    data.value2Prob(value=936.37)
+    data.ax.legend()
+
+    plt.tight_layout(0.5)
+    plt.savefig("successive.pdf")
+
+
+def nonsuccessive():
+    data = Data(
+        np.array([
+            1800, 530, 590, 1460, 2440, 490, 1060, 1790, 1480, 2770, 1420, 410,
+            7100, 2200, 3400, 1300, 3080, 946, 430, 857, 421, 4500, 2800, 846,
+            1400, 1100, 740, 3600, 1470, 690
+        ]))
+    data.history(np.array([9200]), 100, 2)
+    # 本例取自《工程水文学》（1992 年第 2 版，王燕生 主编）P203 例 10-2
+
+    data.figure()
+    data.empiScatter()
+    data.statParams()
+    data.momentPlot()
+    data.plotFitting()
+    data.fittedPlot()
 
     data.ax.legend()
 
     plt.tight_layout(0.5)
-    plt.savefig("fig.pdf")
+    plt.savefig("nonsuccessive.pdf")
 
 
 if __name__ == "__main__":
-    main()
+    successive()
+    nonsuccessive()

@@ -74,15 +74,18 @@ pip install probscale
 
 * 4.2
 
-    为更加美观地显示中文，将 TeX 引擎更换为 pgf 的 XeLaTeX。生成的 pdf 文件可以使用终端的 `dvisvgm` 命令转化为 svg 文件。
+    为更加美观地显示中文，将 TeX 引擎更换为 pgf 的 XeLaTeX。生成的 pdf 文件可以使用终端的 `dvisvgm` 命令转化为 svg 文件（该命令不支持中文路径与中文文件名）。
+
+    中文字体使用[思源黑体 CN](https://github.com/adobe-fonts/source-han-sans)，西文字体使用 [FiraGO](https://github.com/bBoxType/FiraGO)，数学字体使用 [Fira Math](https://github.com/firamath/firamath)。
 
 * 4.3
 
     添加设定是否对期望 *EX* 进行调整的功能。去掉数学期望公式外的其他经验频率计算方法。
 
+* 5.0
+
+    添加对不连序样本（有特大值）进行计算功能。更换示例。
+
 ## TODO
 
 * 可视化界面与封装
-
-* 不连续样本（有特大值）
-
