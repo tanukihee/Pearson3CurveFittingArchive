@@ -8,6 +8,8 @@ from scipy.stats import pearson3
 
 matplotlib.use("pgf")
 plt.rcParams.update({
+    "figure.constrained_layout.use":
+    True,
     "pgf.rcfonts":
     False,
     "pgf.preamble": [
@@ -55,7 +57,7 @@ class Data:
         # 历史洪水序列
         self.length = length
         # 调查期长度
-        self.extremeNum = np.max(len(self.historia), num)
+        self.extremeNum = max(len(self.historia), num)
         # 特大洪水数
         self.extremeNumInMeasure = self.extremeNum - len(arr)
         # 实测期特大洪水数
@@ -327,7 +329,6 @@ def successive():
 
     data.ax.legend()
 
-    plt.tight_layout(0.5)
     plt.savefig("successive.pdf")
 
 
@@ -350,7 +351,6 @@ def nonsuccessive():
 
     data.ax.legend()
 
-    plt.tight_layout(0.5)
     plt.savefig("nonsuccessive.pdf")
 
 

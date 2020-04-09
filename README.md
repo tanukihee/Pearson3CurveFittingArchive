@@ -86,6 +86,10 @@ pip install probscale
 
     添加对不连序样本（有特大值）进行计算功能。更换示例。
 
+* 5.1
+
+    添加实验性功能 `constrained_layout`。
+
 ## TODO
 
 * 可视化界面与封装
