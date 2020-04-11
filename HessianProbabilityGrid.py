@@ -82,8 +82,6 @@ class Data:
         + `gird`：是否显示背景网格，默认为 `True`
         
         + `logVert`：纵坐标是否为对数坐标，默认为 `False`
-        
-        + `font`：标签字体，默认为更纱黑体 CL
         """
         self.fig, self.ax = plt.subplots(figsize=(7, 5))
         # 创建「画板」与「画布」
@@ -117,11 +115,11 @@ class Data:
             self.empiProb = np.append(self.extremeProb, self.ordinaryProb)
 
         # 画布坐标轴设置
-        if self.empiProb[0] > 1:
-            self.probLimLeft = 1
-        else:
-            self.probLimLeft = 10**(np.ceil(np.log10(self.empiProb[0])) - 1)
-        self.probLimRight = 100 - self.probLimLeft
+        probLim = lambda prob: 1 if prob > 1 else 10**(np.ceil(
+            np.log10(prob) - 1))
+
+        self.probLimLeft = probLim(self.empiProb[0])
+        self.probLimRight = 100 - probLim(100 - self.empiProb[-1])
         self.ax.set_xlim(self.probLimLeft, self.probLimRight)
 
         # 点绘经验概率

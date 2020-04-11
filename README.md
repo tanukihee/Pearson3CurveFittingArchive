@@ -88,8 +88,13 @@ pip install probscale
 
 * 5.1
 
-    添加实验性功能 `constrained_layout`。
+    添加实验性功能 `constrained_layout` 。
+
+* 5.2
+
+    不一定对称的坐标轴极限。
 
 ## TODO
 
 * 可视化界面与封装
+
