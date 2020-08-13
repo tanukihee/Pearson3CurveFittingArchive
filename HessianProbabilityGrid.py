@@ -327,7 +327,7 @@ def successive():
 
     data.ax.legend()
 
-    plt.savefig("successive.pdf")
+    plt.savefig("successive.pdf", transparent=True)
 
 
 def nonsuccessive():
@@ -349,7 +349,7 @@ def nonsuccessive():
 
     data.ax.legend()
 
-    plt.savefig("nonsuccessive.pdf")
+    plt.savefig("nonsuccessive.pdf", transparent=True)
 
 
 if __name__ == "__main__":

@@ -94,7 +94,10 @@ pip install probscale
 
     不一定对称的坐标轴极限。
 
+* 5.3
+
+    增加 `transparent=True` 选项，绘制出透明背景图像。
+
 ## TODO
 
 * 可视化界面与封装
-
