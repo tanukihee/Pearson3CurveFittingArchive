@@ -7,22 +7,19 @@ from scipy.optimize import curve_fit
 from scipy.stats import pearson3
 
 matplotlib.use("pgf")
-plt.rcParams.update({
-    "figure.constrained_layout.use":
-    True,
-    "pgf.rcfonts":
-    False,
-    "pgf.preamble": [
-        "\\usepackage{xeCJK}",
-        "\\usepackage{amsmath}",
-        "\\usepackage{siunitx}",
-        "\\sisetup{detect-all}"
-        "\\usepackage{unicode-math}",
-        "\\setsansfont{FiraGO}"
-        "\\setmathfont{Fira Math}"
-        "\\setCJKsansfont{Source Han Sans CN}",
-    ],
-})
+
+plt.rcParams["figure.constrained_layout.use"] = True
+plt.rcParams["pgf.rcfonts"] = False
+plt.rcParams["pgf.preamble"] = [
+    "\\usepackage{xeCJK}",
+    "\\usepackage{amsmath}",
+    "\\usepackage{siunitx}",
+    "\\sisetup{detect-all}"
+    "\\usepackage{unicode-math}",
+    "\\setsansfont{FiraGO}"
+    "\\setmathfont{Fira Math}"
+    "\\setCJKsansfont{Source Han Sans SC}",
+]
 
 
 class Data:

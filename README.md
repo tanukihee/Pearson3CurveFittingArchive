@@ -76,7 +76,7 @@ pip install probscale
 
     为更加美观地显示中文，将 TeX 引擎更换为 pgf 的 XeLaTeX。生成的 pdf 文件可以使用终端的 `dvisvgm` 命令转化为 svg 文件（该命令不支持中文路径与中文文件名）。
 
-    中文字体使用[思源黑体 CN](https://github.com/adobe-fonts/source-han-sans)，西文字体使用 [FiraGO](https://github.com/bBoxType/FiraGO)，数学字体使用 [Fira Math](https://github.com/firamath/firamath)。
+    中文字体使用[思源黑体 SC](https://github.com/adobe-fonts/source-han-sans)，西文字体使用 [FiraGO](https://github.com/bBoxType/FiraGO)，数学字体使用 [Fira Math](https://github.com/firamath/firamath)。
 
 * 4.3
 
@@ -97,6 +97,10 @@ pip install probscale
 * 5.3
 
     增加 `transparent=True` 选项，绘制出透明背景图像。
+
+* 5.4
+
+    现有的设定 `rcParams` 语法即将失效，改而使用更新的 `self[key] = other[key]` 语法。
 
 ## TODO
 
