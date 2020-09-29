@@ -3,23 +3,29 @@ import matplotlib.pyplot as plt
 import numpy as np
 import probscale
 import scipy.stats as stats
+from matplotlib import use
 from scipy.optimize import curve_fit
 from scipy.stats import pearson3
 
-matplotlib.use("pgf")
+useTeX = True
 
-plt.rcParams["figure.constrained_layout.use"] = True
-plt.rcParams["pgf.rcfonts"] = False
-plt.rcParams["pgf.preamble"] = [
-    "\\usepackage{xeCJK}",
-    "\\usepackage{amsmath}",
-    "\\usepackage{siunitx}",
-    "\\sisetup{detect-all}"
-    "\\usepackage{unicode-math}",
-    "\\setsansfont{FiraGO}"
-    "\\setmathfont{Fira Math}"
-    "\\setCJKsansfont{Source Han Sans SC}",
-]
+if useTeX:
+    matplotlib.use("pgf")
+
+    plt.rcParams["figure.constrained_layout.use"] = True
+    plt.rcParams["pgf.rcfonts"] = False
+    plt.rcParams["pgf.preamble"] = [
+        "\\usepackage{xeCJK}",
+        "\\usepackage{amsmath}",
+        "\\usepackage{siunitx}",
+        "\\sisetup{detect-all}"
+        "\\usepackage{unicode-math}",
+        "\\setsansfont{FiraGO}"
+        "\\setmathfont{Fira Math}"
+        "\\setCJKsansfont{Source Han Sans SC}",
+    ]
+else:
+    plt.rcParams["font.sans-serif"] = ['SimHei']
 
 
 class Data:

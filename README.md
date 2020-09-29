@@ -102,6 +102,10 @@ pip install probscale
 
     现有的设定 `rcParams` 语法即将失效，改而使用更新的 `self[key] = other[key]` 语法。
 
+* 5.5
+
+    修复 v4.2 使用 pgf 引擎所带来的不兼容性问题。现可以在代码开始处通过设定 `useTeX` 进行引擎选择。使用自带引擎时请注意修改坐标轴标签。
+
 ## TODO
 
 * 可视化界面与封装
