@@ -14,16 +14,14 @@ if useTeX:
 
     plt.rcParams["figure.constrained_layout.use"] = True
     plt.rcParams["pgf.rcfonts"] = False
-    plt.rcParams["pgf.preamble"] = [
-        "\\usepackage{xeCJK}",
-        "\\usepackage{amsmath}",
-        "\\usepackage{siunitx}",
-        "\\sisetup{detect-all}"
-        "\\usepackage{unicode-math}",
-        "\\setsansfont{FiraGO}"
-        "\\setmathfont{Fira Math}"
-        "\\setCJKsansfont{Source Han Sans SC}",
-    ]
+    plt.rcParams["pgf.preamble"] += "\\usepackage{xeCJK}"
+    plt.rcParams["pgf.preamble"] += "\\usepackage{amsmath}"
+    plt.rcParams["pgf.preamble"] += "\\usepackage{siunitx}"
+    plt.rcParams["pgf.preamble"] += "\\sisetup{detect-all}"
+    plt.rcParams["pgf.preamble"] += "\\usepackage{unicode-math}"
+    plt.rcParams["pgf.preamble"] += "\\setsansfont{FiraGO}"
+    plt.rcParams["pgf.preamble"] += "\\setmathfont{Fira Math}"
+    plt.rcParams["pgf.preamble"] += "\\setCJKsansfont{Source Han Sans SC}"
 else:
     plt.rcParams["font.sans-serif"] = ['SimHei']
 
