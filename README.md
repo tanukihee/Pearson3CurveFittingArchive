@@ -113,3 +113,7 @@ pip install probscale
 ## TODO
 
 * 可视化界面与封装
+
+---
+
+Copyright (c) 2020 -- 2021 ListLee

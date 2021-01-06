@@ -1,9 +1,13 @@
+# Pearson-III curve plotting and fitting,
+# used for hydrological analysis and hydraulic calculations.
+# v5.6
+# Copyright (c) 2020 -- 2021 ListLee
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import probscale
 import scipy.stats as stats
-from matplotlib import use
 from scipy.optimize import curve_fit
 from scipy.stats import pearson3
 
@@ -23,7 +27,7 @@ if useTeX:
     plt.rcParams["pgf.preamble"] += "\\setmathfont{Fira Math}"
     plt.rcParams["pgf.preamble"] += "\\setCJKsansfont{Source Han Sans SC}"
 else:
-    plt.rcParams["font.sans-serif"] = ['SimHei']
+    plt.rcParams["font.sans-serif"] = "SimHei"
 
 
 class Data:
