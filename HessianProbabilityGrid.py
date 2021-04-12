@@ -11,21 +11,23 @@ import scipy.stats as stats
 from scipy.optimize import curve_fit
 from scipy.stats import pearson3
 
-useTeX = True
+USE_TEX = True
 
-if useTeX:
+if USE_TEX:
     matplotlib.use("pgf")
 
     plt.rcParams["figure.constrained_layout.use"] = True
     plt.rcParams["pgf.rcfonts"] = False
-    plt.rcParams["pgf.preamble"] += "\\usepackage{xeCJK}"
-    plt.rcParams["pgf.preamble"] += "\\usepackage{amsmath}"
-    plt.rcParams["pgf.preamble"] += "\\usepackage{siunitx}"
-    plt.rcParams["pgf.preamble"] += "\\sisetup{detect-all}"
-    plt.rcParams["pgf.preamble"] += "\\usepackage{unicode-math}"
-    plt.rcParams["pgf.preamble"] += "\\setsansfont{FiraGO}"
-    plt.rcParams["pgf.preamble"] += "\\setmathfont{Fira Math}"
-    plt.rcParams["pgf.preamble"] += "\\setCJKsansfont{Source Han Sans SC}"
+    plt.rcParams["pgf.preamble"] += r"""
+        \usepackage{xeCJK}
+        \usepackage{amsmath}
+        \usepackage{siunitx}
+        \sisetup{detect-all}
+        \usepackage{unicode-math}
+        \setsansfont{FiraGO}
+        \setmathfont{Fira Math}
+        \setCJKsansfont{Source Han Sans SC}
+    """
 else:
     plt.rcParams["font.sans-serif"] = "SimHei"
 
@@ -43,7 +45,7 @@ class Data:
         # 降序排序输入数组
         self.n = len(arr)
         # 实测期长度
-        self.extremeNum = 0
+        self.extreme_num = 0
         # 特大洪水数
 
     def history(self, arr, length, num=0):
@@ -62,19 +64,19 @@ class Data:
         # 历史洪水序列
         self.length = length
         # 调查期长度
-        self.extremeNum = max(len(self.historia), num)
+        self.extreme_num = max(len(self.historia), num)
         # 特大洪水数
-        self.extremeNumInMeasure = self.extremeNum - len(arr)
+        self.extreme_num_in_measure = self.extreme_num - len(arr)
         # 实测期特大洪水数
 
         # 特大洪水序列与一般洪水序列
         self.extreme = self.historia
         self.ordinary = self.arr
-        if self.extremeNumInMeasure > 0:
-            for i in range(self.extremeNumInMeasure):
+        if self.extreme_num_in_measure > 0:
+            for i in range(self.extreme_num_in_measure):
                 self.extreme = np.append(self.extreme, self.arr[i])
             self.ordinary = np.delete(self.arr,
-                                      range(self.extremeNumInMeasure))
+                                      range(self.extreme_num_in_measure))
 
         self.arr = np.sort(np.append(self.extreme, self.ordinary))[::-1]
 
@@ -103,52 +105,52 @@ class Data:
         if logVert:
             self.ax.set_yscale("log")
 
-    def empiScatter(self):
+    def empi_scatter(self):
         """
         # 点绘经验概率点
         """
         # 数学期望公式计算经验概率
-        if self.extremeNum == 0:
-            self.empiProb = (np.arange(self.n) + 1) / (self.n + 1) * 100
+        if self.extreme_num == 0:
+            self.empi_prob = (np.arange(self.n) + 1) / (self.n + 1) * 100
         else:
-            self.extremeProb = (np.arange(self.extremeNum) +
-                                1) / (self.length + 1) * 100
-            self.ordinaryProb = self.extremeProb[-1] + (
-                100 - self.extremeProb[-1]) * (
-                    np.arange(self.n - self.extremeNumInMeasure) +
-                    1) / (self.n - self.extremeNumInMeasure + 1)
-            self.empiProb = np.append(self.extremeProb, self.ordinaryProb)
+            self.extreme_prob = (np.arange(self.extreme_num) +
+                                 1) / (self.length + 1) * 100
+            self.ordinary_prob = self.extreme_prob[-1] + (
+                100 - self.extreme_prob[-1]) * (
+                    np.arange(self.n - self.extreme_num_in_measure) +
+                    1) / (self.n - self.extreme_num_in_measure + 1)
+            self.empi_prob = np.append(self.extreme_prob, self.ordinary_prob)
 
         # 画布坐标轴设置
-        probLim = lambda prob: 1 if prob > 1 else 10**(np.ceil(
+        prob_lim = lambda prob: 1 if prob > 1 else 10**(np.ceil(
             np.log10(prob) - 1))
 
-        self.probLimLeft = probLim(self.empiProb[0])
-        self.probLimRight = 100 - probLim(100 - self.empiProb[-1])
-        self.ax.set_xlim(self.probLimLeft, self.probLimRight)
+        self.prob_lim_left = prob_lim(self.empi_prob[0])
+        self.prob_lim_right = 100 - prob_lim(100 - self.empi_prob[-1])
+        self.ax.set_xlim(self.prob_lim_left, self.prob_lim_right)
 
         # 点绘经验概率
-        if self.extremeNum == 0:
-            self.ax.scatter(self.empiProb,
-                            self.arr,
-                            marker="o",
-                            c="none",
-                            edgecolors="k",
-                            label="经验概率点")
-        else:
-            self.ax.scatter(self.ordinaryProb,
+        if self.extreme_num:
+            self.ax.scatter(self.ordinary_prob,
                             self.ordinary,
                             marker="o",
                             c="none",
                             edgecolors="k",
                             label="一般洪水经验概率点")
-            self.ax.scatter(self.extremeProb,
+            self.ax.scatter(self.extreme_prob,
                             self.extreme,
                             marker="x",
                             c="k",
                             label="特大洪水经验概率点")
+        else:
+            self.ax.scatter(self.empi_prob,
+                            self.arr,
+                            marker="o",
+                            c="none",
+                            edgecolors="k",
+                            label="经验概率点")
 
-    def statParams(self, output=True):
+    def stat_params(self, output=True):
         """
         # 输出数据的统计参数
         
@@ -156,123 +158,123 @@ class Data:
         
         + `output`：是否在控制台输出参数，默认为 True
         """
-        if self.extremeNum == 0:
+        if self.extreme_num == 0:
             self.expectation = np.mean(self.arr)
             # 期望
-            self.modulusRatio = self.arr / self.expectation
+            self.modulus_ratio = self.arr / self.expectation
             # 模比系数
-            self.coeffOfVar = np.sqrt(
-                np.sum((self.modulusRatio - 1)**2) / (self.n - 1))
+            self.coeff_of_var = np.sqrt(
+                np.sum((self.modulus_ratio - 1)**2) / (self.n - 1))
             # 变差系数
 
         else:
             self.expectation = (np.sum(self.extreme) +
-                                (self.length - self.extremeNum) /
-                                (self.n - self.extremeNumInMeasure) *
+                                (self.length - self.extreme_num) /
+                                (self.n - self.extreme_num_in_measure) *
                                 np.sum(self.ordinary)) / self.length
-            self.coeffOfVar = (np.sqrt(
+            self.coeff_of_var = (np.sqrt(
                 (np.sum((self.extreme - self.expectation)**2) +
-                 (self.length - self.extremeNum) /
-                 (self.n - self.extremeNumInMeasure) * np.sum(
+                 (self.length - self.extreme_num) /
+                 (self.n - self.extreme_num_in_measure) * np.sum(
                      (self.ordinary - self.expectation)**2)) /
                 (self.length - 1))) / self.expectation
 
-        self.coeffOfSkew = stats.skew(self.arr, bias=False)
+        self.coeff_of_skew = stats.skew(self.arr, bias=False)
         # 偏态系数
         if output:
             print("期望 EX 为 %.2f" % self.expectation)
-            print("变差系数 Cv 为 %.4f" % self.coeffOfVar)
-            print("偏态系数 Cs 为 %.4f" % self.coeffOfSkew)
+            print("变差系数 Cv 为 %.4f" % self.coeff_of_var)
+            print("偏态系数 Cs 为 %.4f" % self.coeff_of_skew)
 
-    def momentPlot(self):
+    def moment_plot(self):
         """
         # 绘制矩法估计参数理论概率曲线
         """
-        x = np.linspace(self.probLimLeft, self.probLimRight, 1000)
-        theoY = (pearson3.ppf(1 - x / 100, self.coeffOfSkew) * self.coeffOfVar
-                 + 1) * self.expectation
+        x = np.linspace(self.prob_lim_left, self.prob_lim_right, 1000)
+        theo_y = (pearson3.ppf(1 - x / 100, self.coeff_of_skew) *
+                  self.coeff_of_var + 1) * self.expectation
 
-        self.ax.plot(x, theoY, "--", lw=1, label="矩法估计参数概率曲线")
+        self.ax.plot(x, theo_y, "--", lw=1, label="矩法估计参数概率曲线")
         # 绘制理论曲线
 
-    def plotFitting(self, svRatio=0, EXFitting=True, output=True):
+    def plot_fitting(self, sv_ratio=0, ex_fitting=True, output=True):
         """
         # 优化适线
         
         ## 输入参数
 
-        + `svRatio`：倍比系数，即偏态系数 `Cs` 与 变差系数 `Cv` 之比。
+        + `sv_ratio`：倍比系数，即偏态系数 `Cs` 与 变差系数 `Cv` 之比。
         
             默认为 0，即关闭倍比系数功能。
         
-            - 当 `svRatio` ≠ 0 时，Cs 不参与适线运算中，且 `Cs` = `svRatio` × `Cv`；
+            - 当 `sv_ratio` ≠ 0 时，Cs 不参与适线运算中，且 `Cs` = `sv_ratio` × `Cv`；
 
-            - 当 `svRatio` = 0 时，Cs 正常参与适线运算。
+            - 当 `sv_ratio` = 0 时，Cs 正常参与适线运算。
 
-        + `EXFitting`：适线时是否调整 EX，默认为 True
+        + `ex_fitting`：适线时是否调整 EX，默认为 True
 
         + `output`：是否在控制台输出参数，默认为 True
         """
 
-        if svRatio == 0:
-            if EXFitting:
+        if sv_ratio == 0:
+            if ex_fitting:
                 p3 = lambda prob, ex, cv, cs: (pearson3.ppf(
                     1 - prob / 100, cs) * cv + 1) * ex
 
-                [self.fitEX, self.fitCV, self.fitCS], pcov = curve_fit(
-                    p3, self.empiProb, self.arr,
-                    [self.expectation, self.coeffOfVar, self.coeffOfSkew])
+                [self.fit_EX, self.fit_CV, self.fit_CS], pcov = curve_fit(
+                    p3, self.empi_prob, self.arr,
+                    [self.expectation, self.coeff_of_var, self.coeff_of_skew])
 
             else:
                 p3 = lambda prob, cv, cs: (pearson3.ppf(1 - prob / 100, cs) *
                                            cv + 1) * self.expectation
 
-                [self.fitCV, self.fitCS
-                 ], pcov = curve_fit(p3, self.empiProb, self.arr,
-                                     [self.coeffOfVar, self.coeffOfSkew])
+                [self.fit_CV, self.fit_CS
+                 ], pcov = curve_fit(p3, self.empi_prob, self.arr,
+                                     [self.coeff_of_var, self.coeff_of_skew])
 
-                self.fitEX = self.expectation
+                self.fit_EX = self.expectation
 
         else:
-            if EXFitting:
+            if ex_fitting:
                 p3 = lambda prob, ex, cv: (pearson3.ppf(
-                    1 - prob / 100, cv * svRatio) * cv + 1) * ex
+                    1 - prob / 100, cv * sv_ratio) * cv + 1) * ex
 
-                [self.fitEX, self.fitCV
-                 ], pcov = curve_fit(p3, self.empiProb, self.arr,
-                                     [self.expectation, self.coeffOfVar])
+                [self.fit_EX, self.fit_CV
+                 ], pcov = curve_fit(p3, self.empi_prob, self.arr,
+                                     [self.expectation, self.coeff_of_var])
 
             else:
                 p3 = lambda prob, cv: (pearson3.ppf(
-                    1 - prob / 100, cv * svRatio) * cv + 1) * self.expectation
+                    1 - prob / 100, cv * sv_ratio) * cv + 1) * self.expectation
 
-                [self.fitCV], pcov = curve_fit(p3, self.empiProb, self.arr,
-                                               [self.coeffOfVar])
+                [self.fit_CV], pcov = curve_fit(p3, self.empi_prob, self.arr,
+                                                [self.coeff_of_var])
 
-                self.fitEX = self.expectation
+                self.fit_EX = self.expectation
 
-            self.fitCS = self.fitCV * svRatio
+            self.fit_CS = self.fit_CV * sv_ratio
 
         if output:
             print("适线后")
-            print("期望 EX 为 %.2f" % self.fitEX)
-            print("变差系数 Cv 为 %.4f" % self.fitCV)
-            print("偏态系数 Cs 为 %.4f" % self.fitCS)
+            print("期望 EX 为 %.2f" % self.fit_EX)
+            print("变差系数 Cv 为 %.4f" % self.fit_CV)
+            print("偏态系数 Cs 为 %.4f" % self.fit_CS)
 
-    def fittedPlot(self):
+    def fitted_plot(self):
         """
         # 绘制适线后的概率曲线
         
         """
 
-        x = np.linspace(self.probLimLeft, self.probLimRight, 1000)
-        theoY = (pearson3.ppf(1 - x / 100, self.fitCS) * self.fitCV +
-                 1) * self.fitEX
+        x = np.linspace(self.prob_lim_left, self.prob_lim_right, 1000)
+        theoY = (pearson3.ppf(1 - x / 100, self.fit_CS) * self.fit_CV +
+                 1) * self.fit_EX
 
         self.ax.plot(x, theoY, lw=2, label="适线后概率曲线")
         # 绘制理论曲线
 
-    def prob2Value(self, prob):
+    def prob_to_value(self, prob):
         """
         # 由设计频率转换设计值
         
@@ -285,8 +287,8 @@ class Data:
         + `value`：设计值
         """
 
-        value = (pearson3.ppf(1 - prob / 100, self.fitCS) * self.fitCV +
-                 1) * self.fitEX
+        value = (pearson3.ppf(1 - prob / 100, self.fit_CS) * self.fit_CV +
+                 1) * self.fit_EX
 
         print("%.4f%% 的设计频率对应的设计值为 %.2f" % (prob, value))
 
@@ -305,7 +307,7 @@ class Data:
         + `prob`：设计频率，单位百分数
         """
         prob = 100 - pearson3.cdf(
-            (value / self.fitEX - 1) / self.fitCV, self.fitCS) * 100
+            (value / self.fit_EX - 1) / self.fit_CV, self.fit_CS) * 100
 
         print("%.2f 的设计值对应的设计频率为 %.4f%%" % (value, prob))
 
@@ -324,11 +326,11 @@ def successive():
     # 本例取自《工程水文学》（2010 年第 4 版，詹道江 徐向阳 陈元芳 主编）P150～151 表 6-3
 
     data.figure()
-    data.empiScatter()
-    data.statParams()
-    data.momentPlot()
-    data.plotFitting()
-    data.fittedPlot()
+    data.empi_scatter()
+    data.stat_params()
+    data.moment_plot()
+    data.plot_fitting()
+    data.fitted_plot()
 
     data.ax.legend()
 
@@ -346,11 +348,11 @@ def nonsuccessive():
     # 本例取自《工程水文学》（1992 年第 2 版，王燕生 主编）P203 例 10-2
 
     data.figure()
-    data.empiScatter()
-    data.statParams()
-    data.momentPlot()
-    data.plotFitting()
-    data.fittedPlot()
+    data.empi_scatter()
+    data.stat_params()
+    data.moment_plot()
+    data.plot_fitting()
+    data.fitted_plot()
 
     data.ax.legend()
 
