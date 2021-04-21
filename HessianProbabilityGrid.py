@@ -1,6 +1,6 @@
 # Pearson-III curve plotting and fitting,
 # used for hydrological analysis and hydraulic calculations.
-# v5.6
+# v6.0
 # Copyright (c) 2020 -- 2021 ListLee
 
 import matplotlib
@@ -334,7 +334,7 @@ def successive():
 
     data.ax.legend()
 
-    plt.savefig("successive.pdf", transparent=True)
+    data.fig.savefig("successive.pdf", transparent=True)
 
 
 def nonsuccessive():
@@ -356,7 +356,7 @@ def nonsuccessive():
 
     data.ax.legend()
 
-    plt.savefig("nonsuccessive.pdf", transparent=True)
+    data.fig.savefig("nonsuccessive.pdf", transparent=True)
 
 
 if __name__ == "__main__":
