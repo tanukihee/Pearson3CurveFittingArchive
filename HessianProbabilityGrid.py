@@ -1,6 +1,6 @@
 # Pearson-III curve plotting and fitting,
 # used for hydrological analysis and hydraulic calculations.
-# v6.0
+# v6.1
 # Copyright (c) 2020 -- 2021 ListLee
 
 import matplotlib
@@ -105,21 +105,25 @@ class Data:
         if logVert:
             self.ax.set_yscale("log")
 
-    def empi_scatter(self):
+    def empi_scatter(self, empi_prob=None):
         """
         # 点绘经验概率点
         """
         # 数学期望公式计算经验概率
-        if self.extreme_num == 0:
-            self.empi_prob = (np.arange(self.n) + 1) / (self.n + 1) * 100
+        if empi_prob is None:
+            if self.extreme_num == 0:
+                self.empi_prob = (np.arange(self.n) + 1) / (self.n + 1) * 100
+            else:
+                self.extreme_prob = (np.arange(self.extreme_num) +
+                                     1) / (self.length + 1) * 100
+                self.ordinary_prob = self.extreme_prob[-1] + (
+                    100 - self.extreme_prob[-1]) * (
+                        np.arange(self.n - self.extreme_num_in_measure) +
+                        1) / (self.n - self.extreme_num_in_measure + 1)
+                self.empi_prob = np.append(self.extreme_prob,
+                                           self.ordinary_prob)
         else:
-            self.extreme_prob = (np.arange(self.extreme_num) +
-                                 1) / (self.length + 1) * 100
-            self.ordinary_prob = self.extreme_prob[-1] + (
-                100 - self.extreme_prob[-1]) * (
-                    np.arange(self.n - self.extreme_num_in_measure) +
-                    1) / (self.n - self.extreme_num_in_measure + 1)
-            self.empi_prob = np.append(self.extreme_prob, self.ordinary_prob)
+            self.empi_prob = empi_prob
 
         # 画布坐标轴设置
         prob_lim = lambda prob: 1 if prob > 1 else 10**(np.ceil(
@@ -294,7 +298,7 @@ class Data:
 
         return value
 
-    def value2Prob(self, value):
+    def value_to_prob(self, value):
         """
         # 由设计值转换设计参数
         
